@@ -1,3 +1,7 @@
+# DEPRECATION NOTICE
+This usermod is deprecated and no longer maintained. It will be removed in a future WLED release. Please use usermod multi_relay which has more features.
+
+
 # MQTT controllable switches
 This usermod allows controlling switches (e.g. relays) via MQTT.
 
@@ -46,5 +50,5 @@ This usermod listens on `[mqttDeviceTopic]/switch/0/set` (where 0 is replaced wi
 Feedback about the current state is provided at `[mqttDeviceTopic]/switch/0/state`.
 
 ### Home Assistant auto-discovery
-Auto-discovery information is automatically published and you shoudn't have to do anything to register the switches in Home Assistant.
+Auto-discovery information is automatically published and you shouldn't have to do anything to register the switches in Home Assistant.
  

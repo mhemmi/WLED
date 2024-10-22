@@ -19,10 +19,12 @@ class StairwayWipeUsermod : public Usermod {
     unsigned long timeStaticStart = 0;
     uint16_t previousUserVar0 = 0;
 
+//moved to buildflag
 //comment this out if you want the turn off effect to be just fading out instead of reverse wipe
-#define STAIRCASE_WIPE_OFF
+//#define STAIRCASE_WIPE_OFF
   public:
-
+void setup() {
+    }
     void loop() {
   //userVar0 (U0 in HTTP API):
   //has to be set to 1 if movement is detected on the PIR that is the same side of the staircase as the ESP8266
@@ -42,7 +44,7 @@ class StairwayWipeUsermod : public Usermod {
       if (millis() + strip.timebase > (cycleTime - 25)) { //wipe complete
         effectCurrent = FX_MODE_STATIC;
         timeStaticStart = millis();
-        colorUpdated(NOTIFIER_CALL_MODE_NOTIFICATION);
+        colorUpdated(CALL_MODE_NOTIFICATION);
         wipeState = 2;
       }
     } else if (wipeState == 2) { //static
@@ -54,7 +56,7 @@ class StairwayWipeUsermod : public Usermod {
       #ifdef STAIRCASE_WIPE_OFF
       effectCurrent = FX_MODE_COLOR_WIPE;
       strip.timebase = 360 + (255 - effectSpeed)*75 - millis(); //make sure wipe starts fully lit
-      colorUpdated(NOTIFIER_CALL_MODE_NOTIFICATION);
+      colorUpdated(CALL_MODE_NOTIFICATION);
       wipeState = 4;
       #else
       turnOff();
@@ -82,48 +84,38 @@ class StairwayWipeUsermod : public Usermod {
       //if (root["bri"] == 255) Serial.println(F("Don't burn down your garage!"));
     }
 
-    void addToConfig(JsonObject& root)
-    {
-      JsonObject top = root.createNestedObject("exampleUsermod");
-      top["great"] = userVar0; //save this var persistently whenever settings are saved
-    }
-
-    void readFromConfig(JsonObject& root)
-    {
-      JsonObject top = root["top"];
-      userVar0 = top["great"] | 42; //The value right of the pipe "|" is the default value in case your setting was not present in cfg.json (e.g. first boot)
-    }
-
     uint16_t getId()
     {
-      return USERMOD_ID_EXAMPLE;
+      return USERMOD_ID_STAIRWAY_WIPE;
     }
 
 
     void startWipe()
     {
     bri = briLast; //turn on
-    transitionDelayTemp = 0; //no transition
+    jsonTransitionOnce = true;
+    strip.setTransition(0); //no transition
     effectCurrent = FX_MODE_COLOR_WIPE;
     resetTimebase(); //make sure wipe starts from beginning
 
     //set wipe direction
-    WS2812FX::Segment& seg = strip.getSegment(0);
+    Segment& seg = strip.getSegment(0);
     bool doReverse = (userVar0 == 2);
     seg.setOption(1, doReverse);
 
-    colorUpdated(NOTIFIER_CALL_MODE_NOTIFICATION);
+    colorUpdated(CALL_MODE_NOTIFICATION);
     }
 
     void turnOff()
     {
+    jsonTransitionOnce = true;
     #ifdef STAIRCASE_WIPE_OFF
-    transitionDelayTemp = 0; //turn off immediately after wipe completed
+    strip.setTransition(0); //turn off immediately after wipe completed
     #else
-    transitionDelayTemp = 4000; //fade out slowly
+    strip.setTransition(4000); //fade out slowly
     #endif
     bri = 0;
-    colorUpdated(NOTIFIER_CALL_MODE_NOTIFICATION);
+    stateUpdated(CALL_MODE_NOTIFICATION);
     wipeState = 0;
     userVar0 = 0;
     previousUserVar0 = 0;

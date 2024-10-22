@@ -10,7 +10,7 @@ void handleHue()
 {
   if (hueReceived)
   {
-    colorUpdated(NOTIFIER_CALL_MODE_HUE); hueReceived = false;
+    colorUpdated(CALL_MODE_HUE); hueReceived = false;
     if (hueStoreAllowed && hueNewKey)
     {
       serializeConfigSec(); //save api key
@@ -18,7 +18,7 @@ void handleHue()
       hueNewKey = false;
     }
   }
-  
+
   if (!WLED_CONNECTED || hueClient == nullptr || millis() - hueLastRequestSent < huePollIntervalMs) return;
 
   hueLastRequestSent = millis();
@@ -92,7 +92,7 @@ void onHueData(void* arg, AsyncClient* client, void *data, size_t len)
   if (str == nullptr) return;
   str += 4;
 
-  StaticJsonDocument<512> root;
+  StaticJsonDocument<1024> root;
   if (str[0] == '[') //is JSON array
   {
     auto error = deserializeJson(root, str);
@@ -100,8 +100,8 @@ void onHueData(void* arg, AsyncClient* client, void *data, size_t len)
     {
       hueError = HUE_ERROR_JSON_PARSING; return;
     }
-    
-    int hueErrorCode = root[0][F("error")][F("type")];
+
+    int hueErrorCode = root[0][F("error")]["type"];
     if (hueErrorCode)//hue bridge returned error
     {
       hueError = hueErrorCode;
@@ -113,13 +113,13 @@ void onHueData(void* arg, AsyncClient* client, void *data, size_t len)
       }
       return;
     }
-    
+
     if (hueAuthRequired)
     {
       const char* apikey = root[0][F("success")][F("username")];
       if (apikey != nullptr && strlen(apikey) < sizeof(hueApiKey))
       {
-        strcpy(hueApiKey, apikey);
+        strlcpy(hueApiKey, apikey, sizeof(hueApiKey));
         hueAuthRequired = false;
         hueNewKey = true;
       }
@@ -131,7 +131,7 @@ void onHueData(void* arg, AsyncClient* client, void *data, size_t len)
   str = strstr(str,"state");
   if (str == nullptr) return;
   str = strstr(str,"{");
-  
+
   auto error = deserializeJson(root, str);
   if (error)
   {
@@ -161,7 +161,7 @@ void onHueData(void* arg, AsyncClient* client, void *data, size_t len)
           hueColormode = 1;
         } else //hs mode
         {
-          hueHue = root[F("hue")];
+          hueHue = root["hue"];
           hueSat = root[F("sat")];
           hueColormode = 2;
         }
@@ -176,7 +176,7 @@ void onHueData(void* arg, AsyncClient* client, void *data, size_t len)
   }
 
   hueError = HUE_ERROR_ACTIVE;
-  
+
   //apply vals
   if (hueBri != hueBriLast)
   {
