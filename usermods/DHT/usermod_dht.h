@@ -230,7 +230,6 @@ class UsermodDHT : public Usermod {
 
       hum.add(humidity);
       hum.add("%");
-
       temp.add(temperature);
       #ifdef USERMOD_DHT_CELSIUS
       temp.add("°C");
